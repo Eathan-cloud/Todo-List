@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>To-Do List</title>
+<style>
+:root {
+  --bg: #f0f2f5;
+  --text: #333;
+  --container-bg: #fff;
+  --input-bg: #fff;
+  --btn-add: #28a745;
+  --btn-delete: #dc3545;
+  --btn-clear: #ff8c00;
+  --btn-theme: #007bff;
+  --shadow: rgba(0,0,0,0.1);
+  --priority-high: #ff4d4d;
+  --priority-medium: #ffb84d;
+  --priority-low: #4da6ff;
+  --border: #ccc;
+}
+
+[data-theme="dark"] {
+  --bg: #1e1e1e;
+  --text: #f5f5f5;
+  --container-bg: #2c2c2c;
+  --input-bg: #3a3a3a;
+  --btn-theme: #17a2b8;
+  --shadow: rgba(0,0,0,0.5);
+  --border: #444;
+}
+
+* { box-sizing: border-box; transition: all 0.3s ease; }
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px 10px; /* Padding for mobile edges */
+  min-height: 100vh;
+  margin: 0;
+}
+
+.container {
+  background: var(--container-bg);
+  padding: 20px;
+  border-radius: 15px;
+  width: 100%;
+  max-width: 500px; /* Limit width on desktop */
+  box-shadow: 0 10px 30px var(--shadow);
+}
+
+h1 { text-align: center; margin-bottom: 20px; font-size: 1.8rem; }
+
+/* Responsive Input Group */
+.input-group {
+  display: flex;
+  flex-direction: column; /* Stack vertically on small screens */
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+/* Row layout for Tablet and Computer */
+@media (min-width: 480px) {
+  .input-group {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  #taskInput { flex: 1 1 100%; } /* Task takes full top row on some layouts */
+  #prioritySelect, #deadlineInput { flex: 1; }
+  #addTaskBtn { flex: 0; padding: 10px 25px; }
+}
+
+/* Optimized for very wide screens (desktop) */
+@media (min-width: 600px) {
+  #taskInput { flex: 1; }
+  #prioritySelect, #deadlineInput { flex: 0; }
+}
+
+#taskInput, #prioritySelect, #deadlineInput {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  outline: none;
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 16px; /* Prevents iOS auto-zoom on focus */
+}
+
+#addTaskBtn {
+  padding: 12px;
+  border: none;
+  background: var(--btn-add);
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button#themeToggle, button#clearCompletedBtn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+#themeToggle { background: var(--btn-theme); }
+#clearCompletedBtn { background: var(--btn-clear); }
+
+ul { list-style: none; padding: 0; margin-top: 20px; }
+
+li {
+  padding: 15px;
+  background: var(--input-bg);
+  margin-bottom: 10px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 6px var(--shadow);
+  border: 1px solid var(--border);
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+li.show { opacity: 1; transform: translateY(0); }
+li.completed { text-decoration: line-through; opacity: 0.6; background: #ddd; }
+li.overdue { border-left: 6px solid var(--priority-high); }
+
+li span { flex: 1; margin-right: 10px; cursor: pointer; word-break: break-word; }
+
+.priority-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+
+.deadline { font-size: 0.75em; display: block; color: #777; margin-top: 4px; }
+
+button.deleteBtn {
+  background: var(--btn-delete);
+  border: none;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+/* Accessibility for touch devices */
+@media (pointer: coarse) {
+  button, li { min-height: 44px; }
+  #addTaskBtn, button.deleteBtn { padding: 12px; }
+}
+</style>
+</head>
+<body data-theme="light">
+
+<div class="container">
+  <h1>📝 To-Do List</h1>
+  <div class="input-group">
+    <input type="text" id="taskInput" placeholder="Anong kailangang gawin?">
+    <select id="prioritySelect">
+      <option value="high">Urgent</option>
+      <option value="medium" selected>Normal</option>
+      <option value="low">Low</option>
+    </select>
+    <input type="date" id="deadlineInput">
+    <button id="addTaskBtn">Add Task</button>
+  </div>
+  
+  <button id="themeToggle">🌓 Switch Theme</button>
+  <button id="clearCompletedBtn">🧹 Clear Done</button>
+  
+  <ul id="taskList"></ul>
+</div>
+
+<script>
+// (Mananatili ang iyong orihinal na JavaScript logic dahil maayos na ito)
+const taskInput = document.getElementById('taskInput');
+const addTaskBtn = document.getElementById('addTaskBtn');
+const taskList = document.getElementById('taskList');
+const themeToggle = document.getElementById('themeToggle');
+const clearCompletedBtn = document.getElementById('clearCompletedBtn');
+const prioritySelect = document.getElementById('prioritySelect');
+const deadlineInput = document.getElementById('deadlineInput');
+const body = document.body;
+
+let theme = localStorage.getItem('theme') || 'light';
+body.setAttribute('data-theme', theme);
+
+let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+tasks.forEach(task => addTask(task.text, task.completed, task.priority, task.deadline, false));
+sortTasks();
+
+function saveTasks() {
+  const tasksToSave = [];
+  taskList.querySelectorAll('li').forEach(li => {
+    const span = li.querySelector('.task-text');
+    tasksToSave.push({
+      text: span.textContent,
+      completed: li.classList.contains('completed'),
+      priority: li.dataset.priority,
+      deadline: li.dataset.deadline
+    });
+  });
+  localStorage.setItem('tasks', JSON.stringify(tasksToSave));
+  sortTasks();
+}
+
+addTaskBtn.addEventListener('click', () => {
+  const text = taskInput.value.trim();
+  if(text) {
+    addTask(text, false, prioritySelect.value, deadlineInput.value, true);
+    taskInput.value=''; deadlineInput.value=''; prioritySelect.value='medium'; taskInput.focus();
+  }
+});
+
+function addTask(text, completed=false, priority='medium', deadline='', save=true){
+  const li = document.createElement('li');
+  li.dataset.priority = priority;
+  li.dataset.deadline = deadline;
+
+  const contentWrapper = document.createElement('span');
+  
+  const dot = document.createElement('span');
+  dot.className='priority-dot';
+  dot.style.backgroundColor = priority==='high'? 'var(--priority-high)': priority==='medium'? 'var(--priority-medium)':'var(--priority-low)';
+  
+  const textSpan = document.createElement('span');
+  textSpan.className = 'task-text';
+  textSpan.textContent = text;
+
+  contentWrapper.appendChild(dot);
+  contentWrapper.appendChild(textSpan);
+
+  if(deadline) {
+    const deadlineSpan = document.createElement('span');
+    deadlineSpan.className='deadline';
+    deadlineSpan.textContent = `📅 Due: ${deadline}`;
+    contentWrapper.appendChild(deadlineSpan);
+  }
+
+  if(completed) li.classList.add('completed');
+  if(isOverdue(deadline) && !completed) li.classList.add('overdue');
+
+  contentWrapper.addEventListener('click', () => { 
+    li.classList.toggle('completed'); 
+    li.classList.remove('overdue'); 
+    saveTasks(); 
+  });
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.textContent='🗑️';
+  deleteBtn.className='deleteBtn';
+  deleteBtn.addEventListener('click', e=>{ e.stopPropagation(); li.remove(); saveTasks(); });
+
+  li.appendChild(contentWrapper);
+  li.appendChild(deleteBtn);
+  taskList.appendChild(li);
+  setTimeout(() => li.classList.add('show'), 10);
+  if(save) saveTasks();
+}
+
+function isOverdue(deadline){
+  if(!deadline) return false;
+  const today = new Date().toISOString().split('T')[0];
+  return deadline < today;
+}
+
+themeToggle.addEventListener('click', ()=>{
+  theme = (theme==='light')?'dark':'light';
+  body.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+});
+
+clearCompletedBtn.addEventListener('click', ()=>{
+  taskList.querySelectorAll('li.completed').forEach(li=>li.remove());
+  saveTasks();
+});
+
+function sortTasks(){
+  const items = Array.from(taskList.children);
+  const priorityValue = {high:3, medium:2, low:1};
+  items.sort((a,b)=> priorityValue[b.dataset.priority]-priorityValue[a.dataset.priority] );
+  items.forEach(li => taskList.appendChild(li));
+}
+</script>
+</body>
+</html>
